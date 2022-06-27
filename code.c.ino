@@ -12,17 +12,18 @@ MFRC522::MIFARE_Key key;
 void setup() { 
   Serial.begin(9600);
   SPI.begin(); // Init SPI bus
-  rfid.PCD_Init(); // Init MFRC522 
-  if(db::isInitialized())
+  rfid.PCD_Init(); // Init MFRC522
+  if (!db::checkInit()){
     db::initialize();
+  }
 }
  
 void loop() {
+  db::updateClock();
   if(!rfid.PICC_IsNewCardPresent()) return;
   if (!rfid.PICC_ReadCardSerial()) return;
   String uid = getUID(rfid.uid.uidByte, rfid.uid.size);
-  print(mills());
-  delay(1000);
+  print(uid);
 }
 
 
