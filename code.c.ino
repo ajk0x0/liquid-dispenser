@@ -16,7 +16,6 @@ void setup() {
   SPI.begin(); // Init SPI bus
   pinMode(BUZZER_PIN, OUTPUT);
   rfid.PCD_Init(); // Init MFRC522
-  db::reset();
   print(1>1);
   if (!db::checkInit())
     db::initialize();
@@ -33,8 +32,6 @@ void loop() {
   Clock::updateClock();
   db::resetEntryAddress();
   unsigned long currentTime = Clock::getClock();
-  print("!rfid.PICC_IsNewCardPresent() : ");print(!rfid.PICC_IsNewCardPresent());print("\n");
-  print("!rfid.PICC_ReadCardSerial() : ");print(!rfid.PICC_ReadCardSerial());print("\n");
   if(!rfid.PICC_IsNewCardPresent()) return;
   if (!rfid.PICC_ReadCardSerial()) return;
   print("innn");
@@ -68,7 +65,7 @@ void loop() {
 
 
 void buzz(int op){
-  if (op == 0){
+  if (op == SUCCESS_BUZZ){
     digitalWrite(BUZZER_PIN, HIGH);
     delay(100);
     digitalWrite(BUZZER_PIN, LOW);
