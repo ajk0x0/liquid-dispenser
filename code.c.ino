@@ -5,15 +5,19 @@
 #define SS_PIN 10
 #define RST_PIN 9
  
-MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
+MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class 
 
-MFRC522::MIFARE_Key key; 
+int BUZZER_PIN = 8;
+int SUCCESS_BUZZ = 0;
+int REJECT_BUZZ = 1;
 
 void setup() { 
   Serial.begin(9600);
   SPI.begin(); // Init SPI bus
+  pinMode(BUZZER_PIN, OUTPUT);
   rfid.PCD_Init(); // Init MFRC522
   db::reset();
+  print(1>1);
   if (!db::checkInit())
     db::initialize();
 //  db::updateEntry(entry.address, entry.usage+1, Clock::getClock());
@@ -29,34 +33,61 @@ void loop() {
   Clock::updateClock();
   db::resetEntryAddress();
   unsigned long currentTime = Clock::getClock();
+  print("!rfid.PICC_IsNewCardPresent() : ");print(!rfid.PICC_IsNewCardPresent());print("\n");
+  print("!rfid.PICC_ReadCardSerial() : ");print(!rfid.PICC_ReadCardSerial());print("\n");
   if(!rfid.PICC_IsNewCardPresent()) return;
   if (!rfid.PICC_ReadCardSerial()) return;
+  print("innn");
   String uid = getUID(rfid.uid.uidByte, rfid.uid.size);
-  print("has next: "); print(db::hasNextEntry());
+  print("has next: "); print(uid);
   while(db::hasNextEntry()){
     db::Entry entry = db::nextEntry();
     char rfid[9];
     uid.toCharArray(rfid, 9);
     if (!strcmp(rfid, entry.uid)){
-      if((currentTime - entry.lastUse) > 30000){
+      if((currentTime - entry.lastUse) > 20000){
         print("time update");
-        db::updateEntry(entry.address, 0, currentTime);
+        db::updateEntry(entry.address, 1, currentTime);
       }else if (entry.usage > 2){
         // reject code
+        buzz(REJECT_BUZZ);
         print("Card rejected");print("\n");
         return;
-      }else{
+      }else
         db::updateEntry(entry.address, entry.usage+1, currentTime);
-      }
+      buzz(SUCCESS_BUZZ);
+      delay(1000);
       // open outlet
     }else{
       print("rfid do not match : "); print(uid);
+      buzz(REJECT_BUZZ);
     }
   }
-  db::dumpData();
+//  db::dumpData();
 }
 
 
+void buzz(int op){
+  if (op == 0){
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(100);
+    digitalWrite(BUZZER_PIN, LOW);
+  }
+  else {
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(100);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(100);
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(100);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(100);
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(100);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(100);
+  }
+}
 /**
  * Helper routine to dump a byte array as hex values to Serial. 
  */
