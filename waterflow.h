@@ -27,7 +27,7 @@ namespace waterflow {
   }
   
   unsigned long dispensedMl(){
-      delay(50);
+      if ((millis() - oldTime) < 1) return totalMilliLitres;
       detachInterrupt(sensorInterrupt);
       flowRate = ((1000.0 / (millis() - oldTime)) * pulseCount) / calibrationFactor;
       oldTime = millis();

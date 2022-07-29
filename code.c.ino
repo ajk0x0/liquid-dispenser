@@ -1,14 +1,15 @@
 #include <MFRC522.h>
-#include "db.h"
+#include <string.h>
 #include "waterflow.h"
+#include "wifi.h"
 
 #define print(x) Serial.println(x)
 #define SS_PIN D4
 #define RST_PIN D3
-#define BUZZER_PIN D9
+#define BUZZER_PIN D8
 #define SUCCESS_BUZZ 0
 #define REJECT_BUZZ 1
-#define RELAY_PIN D0
+#define RELAY_PIN D9
 
 MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class 
 
@@ -18,19 +19,21 @@ void setup() {
   pinMode(BUZZER_PIN, OUTPUT);
   rfid.PCD_Init(); // Init MFRC522
   waterflow::initialize();
+  wifi::initialize();
 }
- q
+
 void loop() {
-//  if(!rfid.PICC_IsNewCardPresent()) return;
-//  if (!rfid.PICC_ReadCardSerial()) return;
+  if(!rfid.PICC_IsNewCardPresent()) return;
+  if (!rfid.PICC_ReadCardSerial()) return;
   waterflow::reset();
   String uid = getUID(rfid.uid.uidByte, rfid.uid.size);
-  print(uid);
-//  buzz(SUCCESS_BUZZ);
-  digitalWrite(BUZZER_PIN, HIGH);
-  delay(2000);
-  digitalWrite(BUZZER_PIN, LOW);
-  delay(2000);
+  String data = wifi::getDetails(uid);
+  if (!strcmp(data, "OK")){
+    buzz(SUCCESS_BUZZ);
+    digitalWrite(RELAY_PIN, HIGH);
+    while(waterflow::dispensedMl() < 250) delay(10);
+    digitalWrite(RELAY_PIN, LOW);
+  }else buzz(REJECT_BUZZ);
 }
 
 
@@ -61,7 +64,7 @@ void buzz(int op){
 String getUID(byte *buffer, byte bufferSize) {
   String uid = "";
   uid = (char *) malloc(bufferSize*2);
-  unsigned char firstNibble=0U;
+  unsigned char firstNibble=pre1U;
   unsigned char secondNibble=0U;
   char firstHexChar=0;
   char secondHexChar=0;
@@ -72,14 +75,14 @@ String getUID(byte *buffer, byte bufferSize) {
     if(firstNibble<10U)
       firstHexChar=(char)('0'+firstNibble);
     else{
-     firstNibble-=10U;
-     firstHexChar=(char)('A'+firstNibble);
+    firstNibble-=10U;
+    firstHexChar=(char)('A'+firstNibble);
     }
     if(secondNibble<10U)
-     secondHexChar=(char)('0'+secondNibble);
+    secondHexChar=(char)('0'+secondNibble);
     else{
-     secondNibble-=10U;
-     secondHexChar=(char)('A'+secondNibble);
+    secondNibble-=10U;
+    secondHexChar=(char)('A'+secondNibble);
     }
     uid += firstHexChar;
     uid += secondHexChar;
