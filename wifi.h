@@ -33,4 +33,21 @@ namespace wifi{
         return NULL;
       }
   }
+
+  void updateDetails(String uid){
+    if(WiFi.status()== WL_CONNECTED){
+        WiFiClient client;
+        HTTPClient http;
+        String url = serverName + "?uid=" + uid;
+        http.begin(client, serverPath.c_str());
+        int httpResponseCode = http.POST("");
+        String payload =  http.getString();
+        http.end();
+        return payload;
+      }
+      else {
+        Serial.println("WiFi Disconnected");
+        return NULL;
+      }
+  }
 }

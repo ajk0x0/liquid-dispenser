@@ -33,6 +33,7 @@ void loop() {
     digitalWrite(RELAY_PIN, HIGH);
     while(waterflow::dispensedMl() < 250) delay(10);
     digitalWrite(RELAY_PIN, LOW);
+    wifi::updateDetails(uid);
   }else buzz(REJECT_BUZZ);
 }
 
